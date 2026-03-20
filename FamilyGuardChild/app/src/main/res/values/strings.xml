@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">FamilyGuard Child</string>
+    <string name="sync_channel_name">FamilyGuard Monitoring</string>
+    <string name="sync_channel_desc">Foreground monitoring and periodic sync channel</string>
+    <string name="sync_notification_title">FamilyGuard monitoring active</string>
+    <string name="sync_notification_body">Collecting child device updates securely</string>
+</resources>
