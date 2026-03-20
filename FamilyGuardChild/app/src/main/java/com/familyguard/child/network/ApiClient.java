@@ -1,9 +1,7 @@
 package com.familyguard.child.network;
 
 import android.content.Context;
-
 import com.familyguard.child.storage.SecurePrefs;
-
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -11,7 +9,6 @@ import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -21,13 +18,18 @@ public class ApiClient {
     private static Retrofit retrofit;
     private static String activeBaseUrl;
     private static final int MAX_NETWORK_RETRIES = 2;
+    
+    // आपका Live Render URL यहाँ सेट कर दिया गया है
+    private static final String PRODUCTION_URL = "https://familyguard-fhnd.onrender.com";
 
     private ApiClient() {}
 
     public static synchronized FamilyGuardApi getApi(Context context) {
         Context appContext = context.getApplicationContext();
-        SecurePrefs prefs = new SecurePrefs(appContext);
-        String baseUrl = normalizeBaseUrl(prefs.getApiUrl());
+        
+        // अब यह सीधे प्रोडक्शन URL का उपयोग करेगा
+        String baseUrl = normalizeBaseUrl(PRODUCTION_URL);
+        
         if (retrofit == null || activeBaseUrl == null || !activeBaseUrl.equals(baseUrl)) {
             activeBaseUrl = baseUrl;
             retrofit = createRetrofit(appContext, baseUrl);
@@ -37,7 +39,7 @@ public class ApiClient {
 
     private static Retrofit createRetrofit(Context context, String baseUrl) {
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        logging.setLevel(HttpLoggingInterceptor.Level.BASIC);
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY); // ज़्यादा जानकारी के लिए लेवल BODY रखा है
 
         Interceptor retryInterceptor = chain -> {
             IOException lastException = null;
@@ -67,7 +69,7 @@ public class ApiClient {
             String token = prefs.getDeviceToken();
 
             Request.Builder builder = original.newBuilder();
-            if (!token.isEmpty()) {
+            if (token != null && !token.isEmpty()) {
                 builder.header("x-device-token", token);
             }
             return chain.proceed(builder.build());
@@ -78,10 +80,9 @@ public class ApiClient {
                 .addInterceptor(authInterceptor)
                 .addInterceptor(logging)
                 .retryOnConnectionFailure(true)
-                .connectTimeout(20, TimeUnit.SECONDS)
+                .connectTimeout(30, TimeUnit.SECONDS) // थोड़ा टाइम बढ़ा दिया है Render के लिए
                 .readTimeout(40, TimeUnit.SECONDS)
                 .writeTimeout(40, TimeUnit.SECONDS)
-                .callTimeout(45, TimeUnit.SECONDS)
                 .build();
 
         return new Retrofit.Builder()
@@ -94,15 +95,7 @@ public class ApiClient {
     public static String normalizeBaseUrl(String rawUrl) {
         String safe = rawUrl == null ? "" : rawUrl.trim();
         if (safe.isEmpty()) {
-            throw new IllegalStateException("API base URL is empty. Please enroll with a valid API URL.");
-        }
-        try {
-            URI uri = new URI(safe);
-            if (uri.getScheme() == null || uri.getHost() == null) {
-                throw new IllegalStateException("API URL is invalid.");
-            }
-        } catch (URISyntaxException exception) {
-            throw new IllegalStateException("API URL is invalid.");
+            return PRODUCTION_URL; // अगर खाली है तो डिफ़ॉल्ट URL इस्तेमाल करें
         }
         if (!safe.endsWith("/")) {
             safe = safe + "/";
