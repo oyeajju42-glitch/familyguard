@@ -1,3 +1,18 @@
+# Backend & Dashboard
 node_modules
 .env
+.env.local
 dist
+build
+
+# Android (इसे जोड़ना ज़रूरी है)
+.gradle
+local.properties
+.idea
+*.iml
+.DS_Store
+/FamilyGuardChild/app/build/
+/FamilyGuardChild/build/
+/FamilyGuardChild/.gradle/
+/FamilyGuardChild/.idea/
+capture
